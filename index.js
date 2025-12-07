@@ -1,10 +1,13 @@
-const express = require('express')
-const uuid = require("uuid")
+import express from 'express'
+import cors from 'cors'
+import { v4 as uuidv4 } from 'uuid'
 const app = express()
 const port =  3001
 app.use(express.json())
+app.use(cors())  //qualquer pessoa tem acesso a essa API
 
 const users =[]
+
 
 const checkUserId = (request,response,next) => {
     const {id} = request.params
@@ -25,11 +28,23 @@ app.get('/users', (request,response) => {
     return response.json(users)
 })
 
-app.post('/users',(request,response) => {
-    const {name,age} = request.body
-    const user = { id:uuid.v4(),name,age}
+
+app.post('/users', (request, response) => {
+  try {
+    const { name, age } = request.body
+
+    if (age < 18) throw new Error("Only allowed users over 18 years old")
+
+    const user = { id: uuidv4(), name, age }
     users.push(user)
+
     return response.status(201).json(user)
+
+  } catch (err) {
+    return response.status(400).json({ error: err.message })
+  } finally {
+    console.log("Terminou tudo")
+  }
 })
 
 app.put('/users/:id',checkUserId,  (request,response) => {
@@ -52,5 +67,5 @@ app.delete('/users/:id',checkUserId, (request,response) => {
 })
 
 app.listen(port, ()=>{
-    console.log('🌅 Server started on ${port}')
+    console.log(`🌅 Server started on ${port}`)
 })
